@@ -7,8 +7,9 @@ import com.example.cityhistory.domain.repository.CityHistoryRepository
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
-private const val MODEL = "llama3-70b-8192"
+private const val MODEL = "llama-3.3-70b-versatile"
 private const val MAX_RETRIES = 2
 
 @Singleton
@@ -46,7 +47,6 @@ class CityHistoryRepositoryImpl @Inject constructor(
                 authorization = "Bearer $apiKey",
                 request = request,
             )
-
             val apiError = response.error?.message
             if (apiError != null) {
                 return Result.failure(Exception(apiError))
@@ -64,6 +64,8 @@ class CityHistoryRepositoryImpl @Inject constructor(
                 cache[cacheKey] = content
                 Result.success(content)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: IOException) {
             if (attempt < MAX_RETRIES) {
                 fetchWithRetry(apiKey, city, cacheKey, attempt + 1)

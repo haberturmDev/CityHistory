@@ -7,7 +7,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,11 +38,17 @@ class CityHistoryViewModel @Inject constructor(
         _uiState.value = CityHistoryUiState.Loading
 
         viewModelScope.launch {
-            val result = getCityHistoryUseCase(apiKey = trimmedKey, city = trimmedCity)
-            _uiState.value = result.fold(
-                onSuccess = { CityHistoryUiState.Success(it) },
-                onFailure = { CityHistoryUiState.Error(it.message ?: "An unexpected error occurred.") },
-            )
+            try {
+                val result = withTimeout(30_000L) {
+                    getCityHistoryUseCase(apiKey = trimmedKey, city = trimmedCity)
+                }
+                _uiState.value = result.fold(
+                    onSuccess = { CityHistoryUiState.Success(it) },
+                    onFailure = { CityHistoryUiState.Error(it.message ?: "An unexpected error occurred.") },
+                )
+            } catch (e: TimeoutCancellationException) {
+                _uiState.value = CityHistoryUiState.Error("Request timed out. Please try again.")
+            }
         }
     }
 
