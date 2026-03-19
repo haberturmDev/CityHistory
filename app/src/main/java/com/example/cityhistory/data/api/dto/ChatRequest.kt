@@ -8,6 +8,7 @@ data class ChatRequest(
     val model: String,
     val messages: List<MessageDto>,
     @SerialName("max_tokens") val maxTokens: Int = 512,
+    val stop: List<String>? = null,
 )
 
 @Serializable

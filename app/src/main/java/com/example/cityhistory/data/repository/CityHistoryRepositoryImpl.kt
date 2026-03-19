@@ -19,17 +19,24 @@ class CityHistoryRepositoryImpl @Inject constructor(
 
     private val cache = HashMap<String, String>()
 
-    override suspend fun getCityHistory(apiKey: String, city: String): Result<String> {
-        val cacheKey = city.lowercase().trim()
+    override suspend fun getCityHistory(
+        apiKey: String,
+        city: String,
+        maxTokens: Int,
+        stopSequences: List<String>,
+    ): Result<String> {
+        val cacheKey = "${city.lowercase().trim()}|$maxTokens|${stopSequences.joinToString(",")}"
         cache[cacheKey]?.let { return Result.success(it) }
 
-        return fetchWithRetry(apiKey, city, cacheKey)
+        return fetchWithRetry(apiKey, city, cacheKey, maxTokens = maxTokens, stopSequences = stopSequences)
     }
 
     private suspend fun fetchWithRetry(
         apiKey: String,
         city: String,
         cacheKey: String,
+        maxTokens: Int,
+        stopSequences: List<String>,
         attempt: Int = 0,
     ): Result<String> {
         return try {
@@ -37,11 +44,19 @@ class CityHistoryRepositoryImpl @Inject constructor(
                 model = MODEL,
                 messages = listOf(
                     MessageDto(
+                        role = "system",
+                        content = """You are a knowledgeable city historian. Always respond using exactly this format, with no extra text before or after:
+##Brief History: [2-3 sentences on the city's historical origins and key events]
+##Modern state of city: [1-2 sentences on the city today]
+##Random fact: [one surprising or little-known fact about the city]""",
+                    ),
+                    MessageDto(
                         role = "user",
-                        content = "Provide a concise historical overview of $city",
-                    )
+                        content = "Tell me about $city.",
+                    ),
                 ),
-                maxTokens = 512,
+                maxTokens = maxTokens,
+                stop = stopSequences.ifEmpty { null },
             )
             val response = apiService.getChatCompletion(
                 authorization = "Bearer $apiKey",
@@ -68,7 +83,7 @@ class CityHistoryRepositoryImpl @Inject constructor(
             throw e
         } catch (e: IOException) {
             if (attempt < MAX_RETRIES) {
-                fetchWithRetry(apiKey, city, cacheKey, attempt + 1)
+                fetchWithRetry(apiKey, city, cacheKey, maxTokens, stopSequences, attempt + 1)
             } else {
                 Result.failure(Exception("Network error. Please check your connection and try again."))
             }

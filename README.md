@@ -14,6 +14,9 @@ A minimal, production-quality Android app that uses the [Groq API](https://groq.
 - In-memory cache — repeated queries for the same city skip the network
 - Automatic retry (up to 2 attempts) on network failures
 - Button disabled during loading to prevent duplicate requests
+- **Model Settings accordion** — expand to tune the LLM before sending a request:
+  - **Max Tokens** — limits the response length (default: 250; clamped to 1–32 768)
+  - **Stop Sequences** — comma-separated strings at which the model stops generating (e.g. `END, \n\n`)
 
 ---
 
@@ -142,8 +145,11 @@ app/src/main/java/com/example/cityhistory/
 1. Launch the app.
 2. Paste your Groq API key into the **Groq API Key** field (tap the eye icon to reveal/hide it).
 3. Type a city name into the **City Name** field (e.g. *Rome*, *Tokyo*, *Cairo*).
-4. Tap **Get History**.
-5. The historical summary appears in a card below. The result is cached — tapping the button again for the same city returns instantly.
+4. _(Optional)_ Tap **Model Settings** to expand the accordion and adjust:
+   - **Max Tokens** — how long the response can be (default 250).
+   - **Stop Sequences** — comma-separated stop strings, e.g. `END`.
+5. Tap **Get History**.
+6. The historical summary appears in a card below. The result is cached — tapping the button again for the same city and settings returns instantly.
 
 ---
 

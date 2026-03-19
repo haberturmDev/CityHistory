@@ -20,7 +20,12 @@ class CityHistoryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<CityHistoryUiState>(CityHistoryUiState.Idle)
     val uiState: StateFlow<CityHistoryUiState> = _uiState.asStateFlow()
 
-    fun fetchHistory(apiKey: String, city: String) {
+    fun fetchHistory(
+        apiKey: String,
+        city: String,
+        maxTokens: Int,
+        stopSequences: List<String>,
+    ) {
         if (_uiState.value is CityHistoryUiState.Loading) return
 
         val trimmedKey = apiKey.trim()
@@ -40,7 +45,12 @@ class CityHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = withTimeout(30_000L) {
-                    getCityHistoryUseCase(apiKey = trimmedKey, city = trimmedCity)
+                    getCityHistoryUseCase(
+                        apiKey = trimmedKey,
+                        city = trimmedCity,
+                        maxTokens = maxTokens,
+                        stopSequences = stopSequences,
+                    )
                 }
                 _uiState.value = result.fold(
                     onSuccess = { CityHistoryUiState.Success(it) },

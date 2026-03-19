@@ -7,13 +7,23 @@ class GetCityHistoryUseCase @Inject constructor(
     private val repository: CityHistoryRepository,
 ) {
 
-    suspend operator fun invoke(apiKey: String, city: String): Result<String> {
+    suspend operator fun invoke(
+        apiKey: String,
+        city: String,
+        maxTokens: Int,
+        stopSequences: List<String>,
+    ): Result<String> {
         if (apiKey.isBlank()) {
             return Result.failure(IllegalArgumentException("API key must not be empty."))
         }
         if (city.isBlank()) {
             return Result.failure(IllegalArgumentException("City name must not be empty."))
         }
-        return repository.getCityHistory(apiKey = apiKey.trim(), city = city.trim())
+        return repository.getCityHistory(
+            apiKey = apiKey.trim(),
+            city = city.trim(),
+            maxTokens = maxTokens,
+            stopSequences = stopSequences,
+        )
     }
 }
